@@ -81,13 +81,31 @@ def fetch_pouet_prods(platforms, scene_org_local_copy, scene_org_roots):
     filename = fetch_data()
     platform_dict = parse_and_classify(filename, platforms, scene_org_local_copy, scene_org_roots)
     save_platform_data(platform_dict)
-    # os.makedirs('db', exist_ok=True)
-    # with open('db/prods.json', 'w') as f:
-    #     json.dump(platform_dict, f, indent=2)
+
+
+def fetch_platforms():
+    api_url = "https://api.pouet.net/v1/enums/platforms/"
+    try:
+        response = requests.get(api_url)
+        response.raise_for_status()
+        data = response.json()
+        platforms_list = [
+            data['platforms'][platform_id]["name"]
+            for platform_id in data['platforms']
+        ]
+        return sorted(platforms_list)
+    except requests.RequestException as e:
+        print(f"Error fetching platforms: {e}")
+        return []
+    except KeyError as e:
+        print(f"Unexpected response structure: {e}")
+        return []
 
 
 if __name__ == "__main__":
-    platforms = ["Amstrad CPC", "Amiga AGA", "SNES/Super Famicom"]
+    platforms = fetch_platforms() # ["Amstrad CPC", "Amiga AGA", "SNES/Super Famicom"]
+    print("Found " + str(len(platforms)) + " platforms!")
+
     scene_org_local_copy = "X:\\ftp.scene.org\\"
     scene_org_roots = ["mirrors/hornet/", "pub/"]
     fetch_pouet_prods(platforms, scene_org_local_copy, scene_org_roots)
