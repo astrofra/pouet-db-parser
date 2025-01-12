@@ -54,7 +54,7 @@ def fetch_pouet_prods(platforms, scene_org_local_copy, scene_org_roots):
         json.dump(platform_dict, f, indent=2)
 
 if __name__ == "__main__":
-    plaftorms = ["Amstrad CPC", "Amiga AGA", "SNES/Super Famicom"]
+    platforms = ["Amstrad CPC", "Amiga AGA", "SNES/Super Famicom"]
     scene_org_local_copy = "X:\\ftp.scene.org\\"
     scene_org_roots = ["mirrors/hornet/", "pub/"]
-    fetch_pouet_prods(plaftorms, scene_org_local_copy, scene_org_roots)
+    fetch_pouet_prods(platforms, scene_org_local_copy, scene_org_roots)
