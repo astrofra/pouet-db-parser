@@ -31,48 +31,48 @@ This document provides an overview of the key functions in the script, focusing 
 - **Details**:
   - Connects to the Pouet.net API to retrieve metadata about all available database dumps.
   - Downloads the most recent dump (a compressed JSON file) and saves it locally for further processing.
-- **Why It Matters**:
+- **Why ?**:
   - Pouet.net hosts metadata about demoscene productions. This function ensures you are working with the most up-to-date data.
 
 ### `parse_and_classify(filename, platforms, scene_org_local_copy, scene_org_roots)`
 
-- **Purpose**: Reads the downloaded Pouet.net dump and organizes productions by platform.
+- Reads the downloaded Pouet.net dump and organizes productions by platform.
 - **Details**:
   - Unzips and parses the JSON dump file.
   - Iterates through each production, checking if it has a download link.
   - If the link is hosted on `ftp.scene.org`, it remaps the URL to point to a local backup directory.
   - Classifies productions based on their platform (e.g., Amstrad CPC, Amiga AGA).
-- **Why It Matters**:
+- **Why ?**:
   - Helps you organize and access productions by platform.
   - Resolves links to local files, enabling offline exploration of archived content.
 
 ### `save_platform_data(platform_dict)`
 
-- **Purpose**: Saves the classified productions into JSON files, organized by platform.
+- Saves the classified productions into JSON files, organized by platform.
 - **Details**:
   - Creates a `db/` directory if it doesn’t exist.
   - For each platform, writes its associated productions to a separate JSON file (e.g., `db/amiga_aga.json`).
-- **Why It Matters**:
+- **Why ?**:
   - Provides a structured and easily accessible format for exploring productions offline.
 
 ### `fetch_pouet_prods(platforms, scene_org_local_copy, scene_org_roots)`
 
-- **Purpose**: High-level orchestration function that ties together the data fetching, classification, and saving steps.
+- High-level orchestration function that ties together the data fetching, classification, and saving steps.
 - **Details**:
   - Calls `fetch_data()` to download the latest Pouet.net dump.
   - Passes the dump to `parse_and_classify()` for processing and classification.
   - Saves the results using `save_platform_data()`.
-- **Why It Matters**:
+- **Why ?**:
   - Acts as the main workflow for processing Pouet.net data and resolving links.
 
 ### `fetch_platforms()`
 
-- **Purpose**: Retrieves a list of supported platforms from the Pouet.net API.
+- Retrieves a list of supported platforms from the Pouet.net API.
 - **Details**:
   - Queries Pouet.net for a list of all platforms (e.g., Amiga, SNES).
   - Returns the list in alphabetical order for consistency.
-- **Why It Matters**:
-  - Dynamically fetches the platform list to ensure compatibility with new platforms added to Pouet.net.
+- **Why ?**:
+  - Dynamically fetches the platform list to ensure compatibility when a new platform is added to Pouet.net (happens every 5 years approximately).
 
 ### Constants
 
