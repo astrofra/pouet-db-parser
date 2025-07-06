@@ -130,13 +130,21 @@ for year in sorted(df["year"].unique()):
     plt.savefig(os.path.join(output_folder, f"top20_{year}.png"))
     plt.close()
 
-# Daily message count
+# Daily message count with 7-day rolling average
 daily_counts = df["day"].value_counts().sort_index()
-plt.figure(figsize=(12, 6))
-daily_counts.plot()
-plt.title("Number of messages per day")
+rolling_counts = daily_counts.rolling(window=60, center=True).mean()
+rolling_std_counts = daily_counts.rolling(window=60, center=True).std()
+rolling_mediam_counts = daily_counts.rolling(window=60, center=True).median()
+
+plt.figure(figsize=(18, 6))
+daily_counts.plot(label="Raw daily count", alpha=0.75)
+rolling_counts.plot(label="60-day rolling average", color="red", linewidth=2)
+rolling_mediam_counts.plot(label="60-day rolling median", color="yellow", linewidth=1.5)
+rolling_std_counts.plot(label="60-day rolling std dev", color="green", linewidth=1)
+plt.title("Number of messages per day with 60-day smoothing")
 plt.xlabel("Date")
 plt.ylabel("Number of messages")
+plt.legend()
 plt.tight_layout()
 plt.savefig(os.path.join(output_folder, "messages_per_day.png"))
 plt.close()
