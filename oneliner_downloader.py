@@ -3,11 +3,12 @@ import time
 import random
 import requests
 from bs4 import BeautifulSoup
+import datetime
 
 # === CONFIGURATION ===
 output_dir = "pouet_oneliners"  # Folder where text files will be stored
-base_delay = 15  # Base delay (in seconds)
-random_jitter = 30  # Maximum additional random seconds
+base_delay = 15//3  # Base delay (in seconds)
+random_jitter = 30//3  # Maximum additional random seconds
 max_pages = 11618  # Total known number of pages to download
 
 # Fake browser User-Agent to look more human-like
@@ -29,6 +30,9 @@ existing_files = sorted([
 
 # Determine the starting page
 start_page = existing_files[-1] + 1 if existing_files else 1
+
+# initialize a start time:
+script_start_time = time.time()
 
 # Main loop to download pages
 for page_num in range(start_page, max_pages + 1):
@@ -84,6 +88,19 @@ for page_num in range(start_page, max_pages + 1):
         for i in range(1, 3):
             jitter *= random.uniform(0.5, 1.0)
         actual_delay = max(1, base_delay + jitter)  # Prevent negative or too short delays
+
+        # Calculate elapsed time and estimate remaining time
+        elapsed_time = time.time() - script_start_time
+        pages_done = page_num - start_page + 1
+        pages_remaining = max_pages - page_num
+
+        if pages_done > 0:
+            avg_time_per_page = elapsed_time / pages_done
+            est_remaining_seconds = avg_time_per_page * pages_remaining
+            est_days = int(est_remaining_seconds // 86400)
+            est_hours = int((est_remaining_seconds % 86400) // 3600)
+            
+            print(f"Estimated remaining time: {est_days} days {est_hours} hours.")
 
         print(f"Page {page_num} saved. Sleeping {actual_delay}s.")
         time.sleep(actual_delay)

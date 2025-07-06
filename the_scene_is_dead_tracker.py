@@ -14,7 +14,7 @@ os.makedirs(output_folder, exist_ok=True)
 line_regex = re.compile(r"^(\d{2}:\d{2})\s+(.*?)\[(\d+)\]\s+:\s+(.*)$")
 
 # List of phrases to track
-target_phrases = ["the scene is dead", "the scene died"]
+target_phrases = ["the scene is dead", "the scene died", "la scene est morte"]
 
 # Data storage
 data = []
