@@ -52,6 +52,10 @@ df["day"] = df["datetime"].dt.date
 user_counts_global = df["pouet_id"].value_counts().head(20)
 top_user_ids = user_counts_global.index.tolist()
 
+# Create output folder for user info if it doesn't exist
+user_info_folder = "./pouet_users"
+os.makedirs(user_info_folder, exist_ok=True)
+
 # ---------- Resolve nicknames via API ----------
 user_id_to_nick = {}
 for user_id in top_user_ids:
@@ -63,6 +67,11 @@ for user_id in top_user_ids:
             if json_data.get("success") and "user" in json_data:
                 nickname = json_data["user"].get("nickname", f"ID {user_id}")
                 user_id_to_nick[user_id] = nickname
+                
+                # Save nickname to a text file named after the user ID
+                output_path = os.path.join(user_info_folder, f"{user_id}.txt")
+                with open(output_path, "w", encoding="utf-8") as f:
+                    f.write(nickname)
             else:
                 user_id_to_nick[user_id] = f"ID {user_id}"
         else:
