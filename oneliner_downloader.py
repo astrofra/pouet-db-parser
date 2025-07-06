@@ -81,7 +81,7 @@ for page_num in range(start_page, max_pages + 1):
 
         # Randomized delay to mimic human browsing behavior
         jitter = random.uniform(0, random_jitter)
-        for i in range(1, 5):
+        for i in range(1, 3):
             jitter *= random.uniform(0.5, 1.0)
         actual_delay = max(1, base_delay + jitter)  # Prevent negative or too short delays
 
