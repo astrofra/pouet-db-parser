@@ -6,8 +6,8 @@ from bs4 import BeautifulSoup
 
 # === CONFIGURATION ===
 output_dir = "pouet_oneliners"  # Folder where text files will be stored
-base_delay = 30  # Base delay (in seconds)
-random_jitter = 230  # Maximum additional random seconds
+base_delay = 15  # Base delay (in seconds)
+random_jitter = 30  # Maximum additional random seconds
 max_pages = 11618  # Total known number of pages to download
 
 # Fake browser User-Agent to look more human-like
@@ -63,14 +63,16 @@ for page_num in range(start_page, max_pages + 1):
                 if not time_tag or not user_tag:
                     continue  # Skip malformed lines
                 
+                # <li><time datetime='2000-10-04 18:30:26' title='2000-10-04 18:30:26'>18:30</time> <a href='user.php?who=1' class='usera' title="analogue">
                 time_text = time_tag.get_text(strip=True)
                 nickname = user_tag.get("title", "unknown")
+                pouet_id = user_tag.get("href", "unknown").split('=')[1]
                 
                 # Extract oneliner text by removing time and avatar image
-                text_parts = li.get_text(separator=" ", strip=True).split(' ', 2)
-                message_text = text_parts[2] if len(text_parts) > 2 else ""
+                text_parts = li.get_text(separator=" ", strip=True).split(' ', 1)
+                message_text = text_parts[1] if len(text_parts) > 1 else ""
 
-                output_lines.append(f"{time_text} {nickname} : {message_text}")
+                output_lines.append(f"{time_text} {nickname}[{pouet_id}] : {message_text}")
 
         # Save the extracted lines to a text file
         output_path = os.path.join(output_dir, f"{page_num:05d}.txt")
@@ -79,6 +81,8 @@ for page_num in range(start_page, max_pages + 1):
 
         # Randomized delay to mimic human browsing behavior
         jitter = random.uniform(0, random_jitter)
+        for i in range(1, 5):
+            jitter *= random.uniform(0.5, 1.0)
         actual_delay = max(1, base_delay + jitter)  # Prevent negative or too short delays
 
         print(f"Page {page_num} saved. Sleeping {actual_delay}s.")

@@ -1,0 +1,2 @@
+python oneliner_montly_compilation.py
+pause
