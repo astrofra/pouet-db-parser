@@ -141,4 +141,29 @@ plt.tight_layout()
 plt.savefig(os.path.join(output_folder, "messages_per_day.png"))
 plt.close()
 
+# Weekly user activity (Top 20 users globally)
+df["week"] = df["datetime"].dt.to_period("W").apply(lambda r: r.start_time)
+
+# Prepare weekly activity data for top 20 users
+weekly_counts = df[df["pouet_id"].isin(top_user_ids[:5])].groupby(["week", "pouet_id"]).size().unstack(fill_value=0)
+
+# Sort columns to match display order of global top 20
+weekly_counts = weekly_counts[top_user_ids[:5]]
+
+# Build labels with nicknames
+labels = [f"{user_id_to_nick.get(uid, f'ID {uid}')} [{uid}]" for uid in top_user_ids[:5]]
+
+# Plot activity
+plt.figure(figsize=(20, 8))
+for idx, uid in enumerate(top_user_ids[:5]):
+    plt.plot(weekly_counts.index, weekly_counts[uid], label=labels[idx])
+
+plt.title("Weekly activity of the 20 most active users")
+plt.xlabel("Week")
+plt.ylabel("Number of messages")
+plt.legend()
+plt.tight_layout()
+plt.savefig(os.path.join(output_folder, "weekly_activity_top20.png"))
+plt.close()
+
 print(f"Stats and graphs saved to {output_folder}")
