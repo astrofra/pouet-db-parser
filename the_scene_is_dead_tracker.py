@@ -13,8 +13,8 @@ os.makedirs(output_folder, exist_ok=True)
 # Regex for valid oneliner lines
 line_regex = re.compile(r"^(\d{2}:\d{2})\s+(.*?)\[(\d+)\]\s+:\s+(.*)$")
 
-# Reference phrase to track
-target_phrase = "the scene is dead"
+# List of phrases to track
+target_phrases = ["the scene is dead", "the scene died"]
 
 # Data storage
 data = []
@@ -42,31 +42,36 @@ for filename in sorted(os.listdir(input_folder)):
 df = pd.DataFrame(data)
 df["datetime"] = pd.to_datetime(df["datetime"], format="%Y-%m-%d %H:%M")
 df["quarter"] = df["datetime"].dt.to_period("Q")
+df["month"] = df["datetime"].dt.to_period("M")
 
 # Fuzzy match logic
 match_threshold = 80  # Percent similarity to consider a valid occurrence
 
 def fuzzy_match_found(msg):
-    for i in range(len(msg) - len(target_phrase) + 1):
-        window = msg[i:i+len(target_phrase)+10]
-        if fuzz.partial_ratio(target_phrase, window) >= match_threshold:
-            return True
+    for phrase in target_phrases:
+        for i in range(len(msg) - len(phrase) + 1):
+            window = msg[i:i+len(phrase)+10]
+            if fuzz.partial_ratio(phrase, window) >= match_threshold:
+                return True
     return False
 
 df["is_scene_dead_mention"] = df["message"].apply(fuzzy_match_found)
 
-# Count mentions per quarter
+# Count mentions per quarter and per month
 quarterly_counts = df[df["is_scene_dead_mention"]].groupby("quarter").size()
+monthly_counts = df[df["is_scene_dead_mention"]].groupby("month").size()
 
-# Plot
-plt.figure(figsize=(12, 6))
-quarterly_counts.sort_index().plot(marker="o")
-plt.title("Quarterly occurrence of 'the scene is dead' variations (fuzzy matched)")
-plt.xlabel("Quarter")
+# Plot both curves
+plt.figure(figsize=(14, 7))
+monthly_counts.sort_index().plot(label="Monthly", color="blue", marker="o")
+quarterly_counts.sort_index().plot(label="Quarterly", color="red", linewidth=2)
+plt.title("Occurrence of '" + target_phrases[0] + '/' + target_phrases[1] + "' variations (monthly & quarterly)")
+plt.xlabel("Time")
 plt.ylabel("Number of mentions")
+plt.legend()
 plt.grid(True)
 plt.tight_layout()
-plt.savefig(os.path.join(output_folder, "scene_is_dead_quarterly.png"))
+plt.savefig(os.path.join(output_folder, "scene_is_dead_monthly_quarterly.png"))
 plt.close()
 
-print(f"Quarterly 'scene is dead' curve saved to {output_folder}")
+print(f"Monthly and quarterly overlay curve saved to {output_folder}")
