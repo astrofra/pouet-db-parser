@@ -1,3 +1,4 @@
+
 import os
 import re
 import time
@@ -5,12 +6,46 @@ import random
 import requests
 import pandas as pd
 import matplotlib.pyplot as plt
-from collections import defaultdict
+
+def fetch_user_nickname_from_id(user_id):
+    cache_file = os.path.join(user_cache_folder, f"{user_id}.txt")
+
+    user_id_to_nick = None
+
+    if os.path.exists(cache_file):
+        with open(cache_file, "r", encoding="utf-8") as f:
+            nickname = f.read().strip()
+        user_id_to_nick = nickname
+    else:
+        try:
+            url = f"https://api.pouet.net/v1/user/?id={user_id}"
+            response = requests.get(url)
+            if response.status_code == 200:
+                json_data = response.json()
+                if json_data.get("success") and "user" in json_data:
+                    nickname = json_data["user"].get("nickname", f"ID {user_id}")
+                    user_id_to_nick = nickname
+                    with open(cache_file, "w", encoding="utf-8") as f:
+                        f.write(nickname)
+                else:
+                    user_id_to_nick = f"ID {user_id}"
+            else:
+                user_id_to_nick = f"ID {user_id}"
+        except Exception as e:
+            user_id_to_nick = f"ID {user_id}"
+
+        delay = 5 + random.uniform(0, 3)
+        print(f"Waiting {delay:.1f}s before next API call...")
+        time.sleep(delay)
+
+    return user_id_to_nick
 
 # Folders
 input_folder = "./pouet_oneliners"
 output_folder = "./stats"
+user_cache_folder = "./pouet_users"
 os.makedirs(output_folder, exist_ok=True)
+os.makedirs(user_cache_folder, exist_ok=True)
 
 # Regex for valid oneliner lines
 line_regex = re.compile(r"^(\d{2}:\d{2})\s+(.*?)\[(\d+)\]\s+:\s+(.*)$")
@@ -48,43 +83,17 @@ df["year"] = df["datetime"].dt.year
 df["month"] = df["datetime"].dt.to_period("M")
 df["day"] = df["datetime"].dt.date
 
-# ---------- Identify top users ----------
+# Identify top users
 user_counts_global = df["pouet_id"].value_counts().head(20)
 top_user_ids = user_counts_global.index.tolist()
 
-# Create output folder for user info if it doesn't exist
-user_info_folder = "./pouet_users"
-os.makedirs(user_info_folder, exist_ok=True)
-
-# ---------- Resolve nicknames via API ----------
+# Resolve nicknames with caching
 user_id_to_nick = {}
+
 for user_id in top_user_ids:
-    try:
-        url = f"https://api.pouet.net/v1/user/?id={user_id}"
-        response = requests.get(url)
-        if response.status_code == 200:
-            json_data = response.json()
-            if json_data.get("success") and "user" in json_data:
-                nickname = json_data["user"].get("nickname", f"ID {user_id}")
-                user_id_to_nick[user_id] = nickname
-                
-                # Save nickname to a text file named after the user ID
-                output_path = os.path.join(user_info_folder, f"{user_id}.txt")
-                with open(output_path, "w", encoding="utf-8") as f:
-                    f.write(nickname)
-            else:
-                user_id_to_nick[user_id] = f"ID {user_id}"
-        else:
-            user_id_to_nick[user_id] = f"ID {user_id}"
-    except Exception as e:
-        user_id_to_nick[user_id] = f"ID {user_id}"
+    user_id_to_nick[user_id] = fetch_user_nickname_from_id(user_id)
 
-    # Randomized delay between API requests
-    delay = 5 + random.uniform(0, 3)
-    print(f"Waiting {delay:.1f}s before next API call...")
-    time.sleep(delay)
-
-# ---------- Global histogram with nicknames ----------
+# Global histogram
 plt.figure(figsize=(10, 6))
 labels = [f"{user_id_to_nick.get(uid, f'ID {uid}')} [{uid}]" for uid in user_counts_global.index]
 plt.bar(labels, user_counts_global.values)
@@ -95,10 +104,13 @@ plt.tight_layout()
 plt.savefig(os.path.join(output_folder, "top20_global.png"))
 plt.close()
 
-# ---------- Yearly histograms ----------
+# Yearly histograms
 for year in sorted(df["year"].unique()):
     yearly_df = df[df["year"] == year]
     year_counts = yearly_df["pouet_id"].value_counts().head(20)
+
+    for user_id in year_counts.index:
+        user_id_to_nick[user_id] = fetch_user_nickname_from_id(user_id)
     
     plt.figure(figsize=(10, 6))
     labels = [f"{user_id_to_nick.get(uid, f'ID {uid}')} [{uid}]" for uid in year_counts.index]
@@ -110,7 +122,7 @@ for year in sorted(df["year"].unique()):
     plt.savefig(os.path.join(output_folder, f"top20_{year}.png"))
     plt.close()
 
-# ---------- Message count per day ----------
+# Daily message count
 daily_counts = df["day"].value_counts().sort_index()
 plt.figure(figsize=(12, 6))
 daily_counts.plot()
