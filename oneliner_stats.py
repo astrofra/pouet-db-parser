@@ -8,12 +8,13 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 def fetch_user_nickname_from_id(user_id):
-    cache_file = os.path.join(user_cache_folder, f"{user_id}.txt")
+    cache_file_txt = os.path.join(user_cache_folder, f"{user_id}.txt")
+    cache_file_json = os.path.join(user_cache_folder, f"{user_id}.json")
 
     user_id_to_nick = None
 
-    if os.path.exists(cache_file):
-        with open(cache_file, "r", encoding="utf-8") as f:
+    if os.path.exists(cache_file_txt):
+        with open(cache_file_txt, "r", encoding="utf-8") as f:
             nickname = f.read().strip()
         user_id_to_nick = nickname
     else:
@@ -25,8 +26,14 @@ def fetch_user_nickname_from_id(user_id):
                 if json_data.get("success") and "user" in json_data:
                     nickname = json_data["user"].get("nickname", f"ID {user_id}")
                     user_id_to_nick = nickname
-                    with open(cache_file, "w", encoding="utf-8") as f:
+
+                    # Save nickname
+                    with open(cache_file_txt, "w", encoding="utf-8") as f:
                         f.write(nickname)
+
+                    # Save full JSON data
+                    with open(cache_file_json, "w", encoding="utf-8") as f:
+                        f.write(response.text)
                 else:
                     user_id_to_nick = f"ID {user_id}"
             else:
@@ -39,6 +46,7 @@ def fetch_user_nickname_from_id(user_id):
         time.sleep(delay)
 
     return user_id_to_nick
+
 
 # Folders
 input_folder = "./pouet_oneliners"
