@@ -54,7 +54,7 @@ custom_stopwords.update([
     "over", "again", "ever", "never", "much", "many", "such", "own", "same", "both",
     "because", "into", "onto", "off", "among", "between", "during", "before", "after",
     "under", "above", "against", "upon",
-    "back", "see", "great", "need", "ok",
+    "back", "see", "great", "need", "ok", "doesnt",
 
     # Demoscene-specific or irrelevant in this context
     "plouf", "glop", "yo", "da", "fuck", "good", "bad", "dont", "world", "say", "go", "let", "year",

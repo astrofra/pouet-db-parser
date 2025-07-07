@@ -149,29 +149,31 @@ plt.tight_layout()
 plt.savefig(os.path.join(output_folder, "messages_per_day.png"))
 plt.close()
 
+active_users_max = 8
 # Weekly user activity (Top 20 users globally)
 df["week"] = df["datetime"].dt.to_period("W").apply(lambda r: r.start_time)
 
 # Prepare weekly activity data for top 20 users
-weekly_counts = df[df["pouet_id"].isin(top_user_ids[:5])].groupby(["week", "pouet_id"]).size().unstack(fill_value=0)
+weekly_counts = df[df["pouet_id"].isin(top_user_ids[:active_users_max])].groupby(["week", "pouet_id"]).size().unstack(fill_value=0)
 
 # Sort columns to match display order of global top 20
-weekly_counts = weekly_counts[top_user_ids[:5]]
+weekly_counts = weekly_counts[top_user_ids[:active_users_max]]
 
 # Build labels with nicknames
-labels = [f"{user_id_to_nick.get(uid, f'ID {uid}')} [{uid}]" for uid in top_user_ids[:5]]
+labels = [f"{user_id_to_nick.get(uid, f'ID {uid}')} [{uid}]" for uid in top_user_ids[:active_users_max]]
 
 # Plot activity
 plt.figure(figsize=(20, 8))
-for idx, uid in enumerate(top_user_ids[:5]):
-    plt.plot(weekly_counts.index, weekly_counts[uid], label=labels[idx])
+for idx, uid in enumerate(top_user_ids[:active_users_max]):
+    weekly_mean_counts = weekly_counts.rolling(window=30, center=True).mean()
+    plt.plot(weekly_mean_counts.index, weekly_mean_counts[uid], label=labels[idx])
 
-plt.title("Weekly activity of the 20 most active users")
+plt.title("Weekly activity of the " + str(active_users_max) + " most active users (30-day rolling mean)")
 plt.xlabel("Week")
 plt.ylabel("Number of messages")
 plt.legend()
 plt.tight_layout()
-plt.savefig(os.path.join(output_folder, "weekly_activity_top20.png"))
+plt.savefig(os.path.join(output_folder, "weekly_activity_top" + str(active_users_max) + ".png"))
 plt.close()
 
 print(f"Stats and graphs saved to {output_folder}")
