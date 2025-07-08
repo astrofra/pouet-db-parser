@@ -68,7 +68,7 @@ custom_stopwords.update([
     "thing", "things", "another", "way", "try", "come", "start", "stop", "already", "look",
     "next", "real", "actually", "said", "long", "without", "mean",
     "add", "added", "check", "stop", "seems", "maybe",
-    "created", "users", "hot", "cold", "http", "jpg", "url", "https", "htm",
+    "created", "users", "hot", "cold", "http", "jpg", "url", "https", "htm", "watch", "thanks"
 ])
 
 custom_stopwords.update([
