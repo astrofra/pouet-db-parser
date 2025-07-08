@@ -1,56 +1,70 @@
 import os
 import re
-from collections import Counter
+import pandas as pd
+from langdetect import detect, DetectorFactory, LangDetectException
 import matplotlib.pyplot as plt
-from langdetect import detect, DetectorFactory
-from langdetect.lang_detect_exception import LangDetectException
 
-# Fix random seed to make language detection deterministic
-DetectorFactory.seed = 0
+# Fix random seed for consistent language detection results
+DetectorFactory.seed = 42
 
-# Folders
-input_folder = "./monthly_oneliners"
-output_folder = "./stats"
+# Input and output folders
+input_folder = "monthly_oneliners"
+output_folder = "stats"
 os.makedirs(output_folder, exist_ok=True)
 
-# Regex to detect message lines: HH:MM nickname[ID] : message
-line_regex = re.compile(r"^(\d{2}:\d{2})\s+.*?\[\d+\]\s+:\s+(.*)$")
+# Regex pattern to match oneliner messages
+line_regex = re.compile(r"^\d{2}:\d{2}\s+.*?\[\d+\]\s+:\s+(.*)$")
 
-language_counter = Counter()
-total_messages = 0
-detected_messages = 0
+# Data storage
+records = []
 
+# Process each .txt file in the input folder
 for filename in sorted(os.listdir(input_folder)):
     if filename.endswith(".txt"):
-        filepath = os.path.join(input_folder, filename)
-        with open(filepath, "r", encoding="utf-8") as f:
+        year_month = filename.replace(".txt", "")
+        file_path = os.path.join(input_folder, filename)
+
+        with open(file_path, "r", encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 match = line_regex.match(line)
                 if match:
-                    message = match.group(2)
-                    total_messages += 1
+                    message = match.group(1)
                     try:
                         lang = detect(message)
-                        language_counter[lang] += 1
-                        detected_messages += 1
                     except LangDetectException:
-                        language_counter["unknown"] += 1
+                        lang = "unknown"
+                    records.append({
+                        "month": year_month,
+                        "message": message,
+                        "lang": lang
+                    })
 
-# Display results
-print(f"Total messages: {total_messages}")
-print(f"Detected language for: {detected_messages}")
+# Convert to DataFrame
+df = pd.DataFrame(records)
 
-# Save pie chart
-labels = list(language_counter.keys())
-sizes = list(language_counter.values())
+# Total number of messages per month
+monthly_totals = df.groupby("month").size()
 
-plt.figure(figsize=(10, 8))
-plt.pie(sizes, labels=labels, autopct="%1.1f%%", startangle=140)
-plt.axis("equal")
-plt.title("Language distribution in Pouet Oneliners")
+# Number of messages per language per month
+lang_counts = df.groupby(["month", "lang"]).size().unstack(fill_value=0)
+
+# Normalize to get proportions
+lang_props = lang_counts.div(monthly_totals, axis=0)
+
+# Plot
+plt.figure(figsize=(16, 8))
+for lang in lang_props.columns:
+    if lang_props[lang].max() > 0.01:  # Only plot languages with some presence
+        plt.plot(lang_props.index, lang_props[lang], label=lang)
+
+plt.title("Monthly proportion of detected languages in Pouet Oneliner")
+plt.xlabel("Month")
+plt.ylabel("Proportion")
+plt.xticks(rotation=45)
+plt.legend()
 plt.tight_layout()
-plt.savefig(os.path.join(output_folder, "language_distribution.png"))
+plt.savefig(os.path.join(output_folder, "lang_proportions_over_time.png"))
 plt.close()
 
-print(f"Language distribution chart saved to {output_folder}")
+print("✅ Language detection stats saved in 'stats/lang_proportions_over_time.png'")
