@@ -9,7 +9,7 @@ import datetime
 output_dir = "pouet_oneliners"  # Folder where text files will be stored
 base_delay = 15//2  # Base delay (in seconds)
 random_jitter = 30//2  # Maximum additional random seconds
-max_pages = 11618  # Total known number of pages to download
+max_pages = 11626  # Total known number of pages to download
 
 # Fake browser User-Agent to look more human-like
 headers = {

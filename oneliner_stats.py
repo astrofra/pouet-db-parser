@@ -1,4 +1,3 @@
-
 import os
 import re
 import time
@@ -6,6 +5,9 @@ import random
 import requests
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+from datetime import datetime
+from datetime import timedelta
 
 def fetch_user_nickname_from_id(user_id):
     cache_file_txt = os.path.join(user_cache_folder, f"{user_id}.txt")
@@ -38,7 +40,7 @@ def fetch_user_nickname_from_id(user_id):
                     user_id_to_nick = f"ID {user_id}"
             else:
                 user_id_to_nick = f"ID {user_id}"
-        except Exception as e:
+        except Exception:
             user_id_to_nick = f"ID {user_id}"
 
         delay = 5 + random.uniform(0, 3)
@@ -97,7 +99,6 @@ top_user_ids = user_counts_global.index.tolist()
 
 # Resolve nicknames with caching
 user_id_to_nick = {}
-
 for user_id in top_user_ids:
     user_id_to_nick[user_id] = fetch_user_nickname_from_id(user_id)
 
@@ -130,50 +131,92 @@ for year in sorted(df["year"].unique()):
     plt.savefig(os.path.join(output_folder, f"top20_{year}.png"))
     plt.close()
 
-# Daily message count with 7-day rolling average
+# Define key events to annotate
+key_events = {
+    # Sociopolitical / global context
+    "Breakpoint 2008": pd.to_datetime("2008-03-21"),
+    "2008 Financial Crisis": pd.to_datetime("2008-09-15"),
+    "COVID-19 lockdown (Europe)": pd.to_datetime("2020-03-15"),
+    "Demoscene recognized in France (PCI)": pd.to_datetime("2024-02-01"),
+
+    # Platform shifts
+    "Youtube launch": pd.to_datetime("2005-04-23"),
+    "Twitter launch": pd.to_datetime("2006-07-15"),
+    "Discord popularity": pd.to_datetime("2015-06-01"),
+    "Facebook in Europe": pd.to_datetime("2008-01-01"),
+    "Pouet.net v2": pd.to_datetime("2013-08-01")
+}
+
+# Daily message count with 60-day rolling average and key events
 daily_counts = df["day"].value_counts().sort_index()
 rolling_counts = daily_counts.rolling(window=60, center=True).mean()
 rolling_std_counts = daily_counts.rolling(window=60, center=True).std()
-rolling_mediam_counts = daily_counts.rolling(window=60, center=True).median()
+rolling_median_counts = daily_counts.rolling(window=60, center=True).median()
 
-plt.figure(figsize=(18, 6))
-daily_counts.plot(label="Raw daily count", alpha=0.75)
-rolling_counts.plot(label="60-day rolling average", color="red", linewidth=2)
-rolling_mediam_counts.plot(label="60-day rolling median", color="yellow", linewidth=1.5)
-rolling_std_counts.plot(label="60-day rolling std dev", color="green", linewidth=1)
-plt.title("Number of messages per day with 60-day smoothing")
-plt.xlabel("Date")
-plt.ylabel("Number of messages")
-plt.legend()
-plt.tight_layout()
-plt.savefig(os.path.join(output_folder, "messages_per_day.png"))
+# Compute median and detect spikes
+median_daily = daily_counts.median()
+spike_threshold = 7 * median_daily
+
+# Filter spike days
+spike_days = daily_counts[daily_counts >= spike_threshold]
+
+# Add to key_events only if spike is not within 15 days of existing event
+for date, count in spike_days.items():
+    is_near_existing_event = False
+    for existing_date in key_events.values():
+        if abs(pd.to_datetime(date) - existing_date) <= timedelta(days=15):
+            is_near_existing_event = True
+            break
+    if not is_near_existing_event:
+        label = f"({date})"
+        key_events[label] = pd.to_datetime(date)
+
+fig, ax = plt.subplots(figsize=(18, 6))
+daily_counts.plot(ax=ax, label="Raw daily count", alpha=0.5)
+rolling_counts.plot(ax=ax, label="60-day rolling average", color="red", linewidth=2)
+rolling_median_counts.plot(ax=ax, label="60-day rolling median", color="yellow", linewidth=1.5)
+rolling_std_counts.plot(ax=ax, label="60-day rolling std dev", color="green", linewidth=1)
+
+# Annotate key events
+for label, date in key_events.items():
+    if daily_counts.index.min() <= date.date() <= daily_counts.index.max():
+        ax.axvline(date, color="purple", linestyle="--", linewidth=0.8, alpha=0.5)
+        ax.text(date, ax.get_ylim()[1]*0.95, label, rotation=90, verticalalignment='top', fontsize=11, color="purple")
+
+# Set x-axis ticks to every 6 months, format them as 'YYYY-MM'
+ax.xaxis.set_major_locator(mdates.MonthLocator(interval=6))
+ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
+
+# Optional: rotate for readability
+plt.setp(ax.get_xticklabels(), rotation=45, ha='right')
+
+ax.set_title("Number of messages per day with 60-day smoothing")
+ax.set_xlabel("Date")
+ax.set_ylabel("Number of messages")
+ax.legend()
+fig.tight_layout()
+fig.savefig(os.path.join(output_folder, "messages_per_day.png"))
 plt.close()
 
-active_users_max = 8
 # Weekly user activity (Top 20 users globally)
+active_users_max = 8
 df["week"] = df["datetime"].dt.to_period("W").apply(lambda r: r.start_time)
 
-# Prepare weekly activity data for top 20 users
 weekly_counts = df[df["pouet_id"].isin(top_user_ids[:active_users_max])].groupby(["week", "pouet_id"]).size().unstack(fill_value=0)
-
-# Sort columns to match display order of global top 20
 weekly_counts = weekly_counts[top_user_ids[:active_users_max]]
-
-# Build labels with nicknames
 labels = [f"{user_id_to_nick.get(uid, f'ID {uid}')} [{uid}]" for uid in top_user_ids[:active_users_max]]
 
-# Plot activity
 plt.figure(figsize=(20, 8))
 for idx, uid in enumerate(top_user_ids[:active_users_max]):
     weekly_mean_counts = weekly_counts.rolling(window=30, center=True).mean()
     plt.plot(weekly_mean_counts.index, weekly_mean_counts[uid], label=labels[idx])
 
-plt.title("Weekly activity of the " + str(active_users_max) + " most active users (30-day rolling mean)")
+plt.title(f"Weekly activity of the {active_users_max} most active users (30-day rolling mean)")
 plt.xlabel("Week")
 plt.ylabel("Number of messages")
 plt.legend()
 plt.tight_layout()
-plt.savefig(os.path.join(output_folder, "weekly_activity_top" + str(active_users_max) + ".png"))
+plt.savefig(os.path.join(output_folder, f"weekly_activity_top{active_users_max}.png"))
 plt.close()
 
 print(f"Stats and graphs saved to {output_folder}")
