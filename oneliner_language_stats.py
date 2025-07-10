@@ -54,7 +54,7 @@ lang_props = lang_counts.div(monthly_totals, axis=0)
 
 # Plot
 plt.figure(figsize=(16, 8))
-for lang in lang_props.columns:
+for lang in lang_props.columns[:5]:
     if lang_props[lang].max() > 0.01:  # Only plot languages with some presence
         plt.plot(lang_props.index, lang_props[lang], label=lang)
 
