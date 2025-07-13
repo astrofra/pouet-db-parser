@@ -1,54 +1,11 @@
 import os
 import re
-import time
-import random
-import requests
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from datetime import datetime
 from datetime import timedelta
-
-def fetch_user_nickname_from_id(user_id):
-    cache_file_txt = os.path.join(user_cache_folder, f"{user_id}.txt")
-    cache_file_json = os.path.join(user_cache_folder, f"{user_id}.json")
-
-    user_id_to_nick = None
-
-    if os.path.exists(cache_file_txt):
-        with open(cache_file_txt, "r", encoding="utf-8") as f:
-            nickname = f.read().strip()
-        user_id_to_nick = nickname
-    else:
-        try:
-            url = f"https://api.pouet.net/v1/user/?id={user_id}"
-            response = requests.get(url)
-            if response.status_code == 200:
-                json_data = response.json()
-                if json_data.get("success") and "user" in json_data:
-                    nickname = json_data["user"].get("nickname", f"ID {user_id}")
-                    user_id_to_nick = nickname
-
-                    # Save nickname
-                    with open(cache_file_txt, "w", encoding="utf-8") as f:
-                        f.write(nickname)
-
-                    # Save full JSON data
-                    with open(cache_file_json, "w", encoding="utf-8") as f:
-                        f.write(response.text)
-                else:
-                    user_id_to_nick = f"ID {user_id}"
-            else:
-                user_id_to_nick = f"ID {user_id}"
-        except Exception:
-            user_id_to_nick = f"ID {user_id}"
-
-        delay = 5 + random.uniform(0, 3)
-        print(f"Waiting {delay:.1f}s before next API call...")
-        time.sleep(delay)
-
-    return user_id_to_nick
-
+from pouet_user import fetch_user_nickname_from_id
 
 # Folders
 input_folder = "./pouet_oneliners"
@@ -100,7 +57,7 @@ top_user_ids = user_counts_global.index.tolist()
 # Resolve nicknames with caching
 user_id_to_nick = {}
 for user_id in top_user_ids:
-    user_id_to_nick[user_id] = fetch_user_nickname_from_id(user_id)
+    user_id_to_nick[user_id] = fetch_user_nickname_from_id(user_cache_folder, user_id)
 
 # Global histogram
 plt.figure(figsize=(10, 6))
@@ -137,7 +94,7 @@ key_events = {
     "Breakpoint 2008": pd.to_datetime("2008-03-21"),
     "2008 Financial Crisis": pd.to_datetime("2008-09-15"),
     "COVID-19 lockdown (Europe)": pd.to_datetime("2020-03-15"),
-    "Demoscene recognized in France (PCI)": pd.to_datetime("2024-02-01"),
+    "Demoscene recognized in France (PCI)": pd.to_datetime("2025-02-01"),
 
     # Platform shifts
     "Youtube launch": pd.to_datetime("2005-04-23"),
