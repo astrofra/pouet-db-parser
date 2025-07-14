@@ -1,2 +1,0 @@
-python the_scene_is_dead_tracker.py
-pause

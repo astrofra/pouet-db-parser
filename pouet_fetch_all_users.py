@@ -13,7 +13,7 @@ os.makedirs(user_cache_folder, exist_ok=True)
 complete = False
 
 while complete is False:
-    time.sleep(random.uniform(10, 25))
+    time.sleep(random.uniform(120, 240))
     next_user_id = int(random.uniform(0, max_user_id))
     user_found = fetch_user_nickname_from_id(user_cache_folder, next_user_id)
     if not user_found.isdigit(): # we found an actual nickname/user

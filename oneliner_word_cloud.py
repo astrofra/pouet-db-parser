@@ -132,9 +132,6 @@ custom_stopwords.update([
     "merde", "fuck", "yo", "putain", "bordel"
 ])
 
-
-
-
 # Generate word clouds by year
 for year in sorted(df["year"].unique()):
     yearly_df = df[df["year"] == year]
