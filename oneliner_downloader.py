@@ -9,14 +9,12 @@ import datetime
 output_dir = "pouet_oneliners"  # Folder where text files will be stored
 base_delay = 15//2  # Base delay (in seconds)
 random_jitter = 30//2  # Maximum additional random seconds
-max_pages = 11626  # Total known number of pages to download
+max_pages = 11635  # Total known number of pages to download
 
-# Fake browser User-Agent to look more human-like
+# Friendly browser signature
 headers = {
     "User-Agent": (
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/114.0.0.0 Safari/537.36"
+        "AstrofraResearchBot/1.0 (+https://www.pouet.net/user.php?who=38632 ; contact: astrofra@gmail.com)"
     )
 }
 

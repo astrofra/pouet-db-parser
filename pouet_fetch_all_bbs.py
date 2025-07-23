@@ -16,11 +16,10 @@ BASE_URL = "https://www.pouet.net/topic.php?which={}&page={}"
 
 HEADERS = {
     "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/114.0.0.0 Safari/537.36"
+        "AstrofraResearchBot/1.0 (+https://www.pouet.net/user.php?who=38632 ; contact: astrofra@gmail.com)"
     )
 }
+
 
 
 def sanitize_filename(name):
@@ -112,7 +111,8 @@ def scrape_topic(topic_id):
         all_posts = extract_posts(soup)
 
         for page in range(2, total_pages + 1):
-            time.sleep(0.5)
+            print('.', end='')
+            time.sleep(random.uniform(10, 30))
             r_page = requests.get(BASE_URL.format(topic_id, page), headers=HEADERS, timeout=10)
             soup_page = BeautifulSoup(r_page.text, "html.parser")
             all_posts += extract_posts(soup_page)
@@ -160,8 +160,8 @@ def main(start_id=1, end_id=12872):
 
         print(f"[{topic_id:05d}] {status} | {remaining} remaining | ETA ≈ {eta}")
 
-        time.sleep(random.uniform(60 * 2, 120 * 2))
+        time.sleep(random.uniform(60, 240))
 
 
 if __name__ == "__main__":
-    main(start_id=1, end_id=12872)
+    main(start_id=2734, end_id=12880)
