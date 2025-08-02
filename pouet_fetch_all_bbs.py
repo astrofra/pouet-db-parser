@@ -158,10 +158,12 @@ def main(start_id=1, end_id=12872):
         else:
             status = "Unknown status"
 
-        print(f"[{topic_id:05d}] {status} | {remaining} remaining | ETA ≈ {eta}")
+        next_delay = int(random.uniform(20, 80))
 
-        time.sleep(random.uniform(60, 240))
+        print(f"[{topic_id:05d}] {status} | Next query in {next_delay}s | {remaining} remaining | ETA ≈ {eta}")
+
+        time.sleep(next_delay)
 
 
 if __name__ == "__main__":
-    main(start_id=2734, end_id=12880)
+    main(start_id=8079, end_id=12880)

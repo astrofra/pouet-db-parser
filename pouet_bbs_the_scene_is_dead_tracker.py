@@ -28,7 +28,8 @@ def fuzzy_occurence(target_phrases, output_png):
                         if timestamp and content:
                             data.append({
                                 "datetime": timestamp,
-                                "message": content
+                                "message": content,
+                                "filename": filename
                             })
                 except json.JSONDecodeError as e:
                     print(f"Error reading {filename}: {e}")
@@ -55,11 +56,13 @@ def fuzzy_occurence(target_phrases, output_png):
     df["is_scene_dead_mention"] = df["message"].apply(fuzzy_match_found)
 
     # Count mentions per quarter and per month
+    daily_counts = df[df["is_scene_dead_mention"]].groupby(df["datetime"].dt.date).size()
     quarterly_counts = df[df["is_scene_dead_mention"]].groupby("quarter").size()
     monthly_counts = df[df["is_scene_dead_mention"]].groupby("month").size()
 
     # Plot both curves
-    plt.figure(figsize=(14, 7))
+    plt.figure(figsize=(18, 7))
+    daily_counts.sort_index().plot(label="Daily", color="green", linewidth=1)
     monthly_counts.sort_index().plot(label="Monthly", color="blue", marker="o")
     quarterly_counts.sort_index().plot(label="Quarterly", color="red", linewidth=2)
     plt.title("Occurrence of '" + target_phrases[0] + "' (and variations)")
@@ -74,9 +77,18 @@ def fuzzy_occurence(target_phrases, output_png):
     df[df["is_scene_dead_mention"]].to_csv(
     os.path.join(output_folder, "occurence_bbs_scene_is_dead_mentions.csv"),
     index=False,
-    columns=["datetime", "message"]
+    columns=["datetime", "filename", "message"]
     )
 
+    df[df["is_scene_dead_mention"]][["datetime", "filename", "message"]].to_json(
+    os.path.join(output_folder, "occurence_bbs_scene_is_dead_mentions.json"),
+    orient="records",
+    lines=False,
+    force_ascii=False,
+    date_format="iso",
+    indent=2
+    )
+    
     print(f"Monthly and quarterly overlay curve saved to {output_folder}")
 
 # Exemple d'appel
