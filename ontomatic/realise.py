@@ -37,7 +37,7 @@ def sanitize_filename(s: str):
 # ----------- entrypoint -----------
 
 def main():
-    url = sys.argv[1] if len(sys.argv) > 1 else "https://api.pouet.net/v1/prod/?id=3054"
+    url = sys.argv[1] if len(sys.argv) > 1 else "https://api.pouet.net/v1/prod/?id=104792" # 3054"
     data = http_get_json(url)
     if not data:
         sys.stderr.write("[error] no data\n")
@@ -57,6 +57,25 @@ def main():
     extract["oeuvre_performance"]["evenement"]["dates_de_presentation"] = data["prod"]["releaseDate"]
     extract["oeuvre_performance"]["evenement"]["nom"] = data["prod"]["party"]["name"]
     extract["oeuvre_depot"]["referencement"]["identifiant"] = data["prod"]["id"]
+
+    # ----- collaborateurs (persons from credits + groups as 'groupe') -----
+    collaborateurs = []
+
+    # persons from credits
+    for c in data["prod"].get("credits", []):
+        user = c.get("user", {})
+        nom = user.get("nickname") or ""
+        role = c.get("role") or ""
+        if nom and role:
+            collaborateurs.append({"nom": nom, "role": role, "est": "personne"})
+
+    # groups as collaborators with role 'groupe'
+    for g in data["prod"].get("groups", []):
+        gname = g.get("name") or ""
+        if gname:
+            collaborateurs.append({"nom": gname, "est": "collectif"})
+
+    extract["oeuvre_realisation"]["collaborateurs"] = collaborateurs
 
     prod_id = extract["oeuvre_depot"]["referencement"]["identifiant"]
     title = extract["oeuvre_performance"]["titre_oeuvre"]
